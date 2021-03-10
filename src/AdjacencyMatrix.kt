@@ -10,7 +10,7 @@ class AdjacencyMatrix(graphSrc: List<List<String>>) {
     private var visited = Array(graph.size) { false }
 
     private var time = 1
-    var callOnRoot = 0
+    private var callOnRoot = 0
 
     init {
         for (i in graphSrc.indices) {
@@ -20,6 +20,19 @@ class AdjacencyMatrix(graphSrc: List<List<String>>) {
         }
     }
 
+    fun tarjan(at:Int): Array<Pair<Int, Int>> {
+
+        val discover = Array(graph.size) { 0 }
+        val low = Array(graph.size) { 0 }
+        val pred = Array(graph.size) { 0 }
+        val parentChild = ArrayList<Pair<Int, Int>>()
+
+        time = 1
+        computeLow(at, discover, low, pred, parentChild)
+
+        return parentChild.filter { low[it.first] < low[it.second] }.toTypedArray()
+
+    }
 
     fun floydWarshall(): Array<Array<Int>> {
 
@@ -54,7 +67,6 @@ class AdjacencyMatrix(graphSrc: List<List<String>>) {
 
     }
 
-
     /**
      * Finds the first local sink.
      * @return Id of the first local sink. -1 if no sink exists.
@@ -75,7 +87,6 @@ class AdjacencyMatrix(graphSrc: List<List<String>>) {
         return if (graph[i].any { it == 1 }) -1 else i
 
     }
-
 
     fun eulerPath(): ArrayList<Pair<Int, Int>> {
 
@@ -103,7 +114,6 @@ class AdjacencyMatrix(graphSrc: List<List<String>>) {
     }
 
     private fun eulerStartVertex(): Int = getCard().indexOf(getCard().find { it % 2 != 0 })
-
 
     private fun eulerPath(
         tempGraph: Array<Array<Int>>,
@@ -137,7 +147,6 @@ class AdjacencyMatrix(graphSrc: List<List<String>>) {
 
     private fun isEulerian(): Boolean = graph.indices.count { getDegree(it) % 2 != 0 } <= 2
 
-
     /**
      * Returns all the articulation points. Root is not included as one of the articulation points. Todo: look into it.
      * @param start Root vertex
@@ -152,6 +161,7 @@ class AdjacencyMatrix(graphSrc: List<List<String>>) {
 
         computeLow(start, discover, low, pred, parentChild)
         visited = Array(graph.size) { false }
+        time = 1
 
         isRootArticulation(start, start)
 
@@ -221,7 +231,7 @@ class AdjacencyMatrix(graphSrc: List<List<String>>) {
     }
 
 
-    fun bellmanFord(start: Int) {
+    fun bellmanFord(start: Int): Array<Int> {
 
         val vertices = Array(graph.size) { Int.MAX_VALUE }
         vertices[start] = 0
@@ -229,6 +239,8 @@ class AdjacencyMatrix(graphSrc: List<List<String>>) {
         for (i in 0 until graph.size - 1) {
             relaxation(vertices)
         }
+
+        return vertices
 
     }
 
@@ -352,7 +364,8 @@ class AdjacencyMatrix(graphSrc: List<List<String>>) {
  * DFS
  * BFS
  * Bellman Ford
- * Articulation Points: add root check
+ * Articulation Points
+ * Tarjan's Algorithm
  * Eulerian Path: add circuit
  * Sink
  * Floyd Warshall: test

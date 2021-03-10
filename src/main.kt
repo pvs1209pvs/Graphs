@@ -1,17 +1,9 @@
-fun main(args:Array<String>){
+fun main(args: Array<String>) {
 
 
-    for (i in 0 until 11){
-        val g = AdjacencyMatrix(readGraph("graphs/undir-graphs/undir-graph-$i.txt"))
-        println(g.articulationPoints(0).contentToString())
+    val g = AdjacencyMatrix(readGraph("graphs/undir-graphs/undir-graph-11.txt"))
+    println(g.tarjanDFS(0).contentToString())
 
-    }
-
-    //AdjacencyMatrix(readGraph("graphs/undir-graphs/undir-graph-2.txt")).articulationPoints(0)
-
-//    val list = ArrayList<Int>()
-//    val a = AdjacencyMatrix(readGraph("graphs/undir-graphs/undir-graph-2.txt"))
-//    println( a.articulationPoints(0).contentToString())
 
     /**
      * a = 0

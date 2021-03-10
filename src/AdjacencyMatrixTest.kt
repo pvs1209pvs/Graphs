@@ -3,8 +3,6 @@ import org.junit.jupiter.api.Test
 
 internal class AdjacencyMatrixTest {
 
-    private val NUM_TESTS = 11
-
     @Test
     fun articulationPoints(){
 
@@ -22,13 +20,26 @@ internal class AdjacencyMatrixTest {
             arrayOf()
         )
 
-        for (i in 0 until NUM_TESTS){
+        for (i in results.indices){
             assertArrayEquals( AdjacencyMatrix(readGraph("graphs/undir-graphs/undir-graph-$i.txt")).articulationPoints(0), results[i])
         }
 
     }
 
 
+    @Test
+    fun bellmanFord(){
+
+        val results = arrayOf(
+            arrayOf(0, -1, 2, -2, 1),
+            arrayOf(0, 1, 3, 2, 5)
+        )
+
+        for (i in results.indices){
+            assertArrayEquals(AdjacencyMatrix(readGraph("graphs/weighted-graphs/weighted-graph-$i.txt")).bellmanFord(0), results[i])
+        }
+
+    }
 
     @Test
     fun bfs() {
@@ -47,7 +58,7 @@ internal class AdjacencyMatrixTest {
             listOf(0, 1, 2, 3)
         )
 
-        for (i in 0 until NUM_TESTS) {
+        for (i in results.indices) {
             val list = ArrayList<Int>()
             AdjacencyMatrix(readGraph("graphs/undir-graphs/undir-graph-$i.txt")).bfs(0, list)
             assertEquals(results[i], list)
@@ -73,7 +84,7 @@ internal class AdjacencyMatrixTest {
             listOf(0, 1, 2, 3)
         )
 
-        for (i in 0 until NUM_TESTS) {
+        for (i in results.indices) {
             val list = ArrayList<Int>()
             AdjacencyMatrix(readGraph("graphs/undir-graphs/undir-graph-$i.txt")).dfs(0, list)
             assertEquals(results[i], list)
