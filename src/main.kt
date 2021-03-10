@@ -1,14 +1,25 @@
 fun main(args:Array<String>){
 
-//    listOf(
-//        AdjacencyMatrix(readGraph("graphs/undir-graphs/undir-graph-0.txt")),
-//        AdjacencyMatrix(readGraph("graphs/undir-graphs/undir-graph-1.txt")),
-//        AdjacencyMatrix(readGraph("graphs/undir-graphs/undir-graph-2.txt")),
-//        AdjacencyMatrix(readGraph("graphs/undir-graphs/undir-graph-3.txt"))
-//    ).forEach{ println(it.articulationPoints(0).contentToString())}
 
-    val g = AdjacencyMatrix(readGraph("graphs/undir-graphs/undir-graph-4.txt"))
-    println(g.isEulerian())
+    for (i in 0 until 11){
+        val g = AdjacencyMatrix(readGraph("graphs/undir-graphs/undir-graph-$i.txt"))
+        println(g.articulationPoints(0).contentToString())
+
+    }
+
+    //AdjacencyMatrix(readGraph("graphs/undir-graphs/undir-graph-2.txt")).articulationPoints(0)
+
+//    val list = ArrayList<Int>()
+//    val a = AdjacencyMatrix(readGraph("graphs/undir-graphs/undir-graph-2.txt"))
+//    println( a.articulationPoints(0).contentToString())
+
+    /**
+     * a = 0
+     * b = 1
+     * c = 2
+     * d = 3
+     * e = 4
+     */
 
 }
 
