@@ -1,10 +1,9 @@
 fun main(args: Array<String>) {
 
 
-    val g = AdjacencyMatrix(readGraph("graphs/undir-graphs/undir-graph-11.txt"))
-    println(g.tarjanDFS(0).contentToString())
-
-
+    val l : List<Int> = ArrayList<Int>()
+    cool(l)
+    println(l)
     /**
      * a = 0
      * b = 1
@@ -13,6 +12,10 @@ fun main(args: Array<String>) {
      * e = 4
      */
 
+}
+
+fun cool(stuff : MutableList<Int>){
+    stuff.add(100)
 }
 
 /*

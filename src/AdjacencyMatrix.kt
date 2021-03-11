@@ -20,7 +20,47 @@ class AdjacencyMatrix(graphSrc: List<List<String>>) {
         }
     }
 
-    fun tarjan(at:Int): Array<Pair<Int, Int>> {
+
+    /**
+     * Returns the number of paths you can take from one vertex to the other in p number of hops.
+     * @param p Number of hops from one vertex to the other.
+     * @return Adjacency matrix containing the number of paths from one vertex to the other.
+     */
+    fun inMove(p: Int): Array<Array<Int>> {
+
+        val tmp = Array(graph.size) { Array(graph.size) { 0 } }
+        val m = Array(graph.size) { Array(graph.size) { 0 } }
+        val r = Array(graph.size) { Array(graph.size) { 0 } }
+        for (i in graph.indices) {
+            for (j in graph.indices) {
+                m[i][j] = graph[i][j]
+                r[i][j] = graph[i][j]
+            }
+        }
+
+        var sum = 0
+        for (i in 0 until p - 1) {
+            for (b in graph.indices) {
+                for (d in graph.indices) {
+                    for (k in graph.indices) {
+                        sum += r[b][k] * m[k][d]
+                    }
+                    tmp[b][d] = sum
+                    sum = 0
+                }
+            }
+            for (b in graph.indices) {
+                for (d in graph.indices) {
+                    r[b][d] = tmp[b][d]
+                }
+            }
+        }
+
+        return r
+    }
+
+
+    fun tarjan(at: Int): Array<Pair<Int, Int>> {
 
         val discover = Array(graph.size) { 0 }
         val low = Array(graph.size) { 0 }
@@ -113,7 +153,10 @@ class AdjacencyMatrix(graphSrc: List<List<String>>) {
 
     }
 
-    private fun eulerStartVertex(): Int = getCard().indexOf(getCard().find { it % 2 != 0 })
+    /**
+     * Returns the starting vertex for euler path.
+     */
+    private fun eulerStartVertex() = getCard().indexOf(getCard().find { it % 2 != 0 })
 
     private fun eulerPath(
         tempGraph: Array<Array<Int>>,
@@ -159,9 +202,10 @@ class AdjacencyMatrix(graphSrc: List<List<String>>) {
         val pred = Array(graph.size) { 0 }
         val parentChild = ArrayList<Pair<Int, Int>>()
 
-        computeLow(start, discover, low, pred, parentChild)
-        visited = Array(graph.size) { false }
         time = 1
+        computeLow(start, discover, low, pred, parentChild)
+
+        visited = Array(graph.size) { false }
 
         isRootArticulation(start, start)
 
@@ -180,6 +224,11 @@ class AdjacencyMatrix(graphSrc: List<List<String>>) {
 
     }
 
+    /**
+     * Checks if root is an articulation point.
+     * @param at Starting vertex.
+     * @param root Root vertex.
+     */
     private fun isRootArticulation(at: Int, root: Int) {
 
         if (visited[at]) return
@@ -197,8 +246,17 @@ class AdjacencyMatrix(graphSrc: List<List<String>>) {
 
     }
 
+    /**
+     * Computes the discovery and low number for the vertices in the graph.
+     * @param v Starting node.
+     * @param discover Discovery numbers for vertices.
+     * @param low Low numbers for vertices.
+     * @param pred Predecessor of the current vertex being explored.
+     * @param parentChild Parent-child relation of the DFS tree.
+     */
     private fun computeLow(
-        v: Int, discover: Array<Int>,
+        v: Int,
+        discover: Array<Int>,
         low: Array<Int>,
         pred: Array<Int>,
         parentChild: ArrayList<Pair<Int, Int>>
@@ -230,7 +288,12 @@ class AdjacencyMatrix(graphSrc: List<List<String>>) {
 
     }
 
-
+    /**
+     * Returns the shortest path form the starting vertex to every other vertex.
+     * Also works for negative edges.
+     * @param start Starting vertex.
+     * @return List containing the shortest path from the starting to other vertices.
+     */
     fun bellmanFord(start: Int): Array<Int> {
 
         val vertices = Array(graph.size) { Int.MAX_VALUE }
@@ -243,7 +306,6 @@ class AdjacencyMatrix(graphSrc: List<List<String>>) {
         return vertices
 
     }
-
 
     private fun relaxation(vertices: Array<Int>) {
 
@@ -259,18 +321,20 @@ class AdjacencyMatrix(graphSrc: List<List<String>>) {
 
     }
 
-
     /**
+     * Returns the BFS path of the graph.
      * Useful for finding shortest path in an unweighted graph.
+     * @param at Staring vertex.
+     * @param List used to store the BFS path.
      */
-    fun bfs(start: Int, list: ArrayList<Int>) {
+    fun bfs(at: Int, list: ArrayList<Int>) {
 
-        list.add(start)
+        list.add(at)
 
         val q = ArrayDeque<Int>()
 
-        q.addLast(start)
-        visited[start] = true
+        q.addLast(at)
+        visited[at] = true
 
         while (q.isNotEmpty()) {
             val neighbors = graph[q.removeFirst()]
@@ -286,7 +350,11 @@ class AdjacencyMatrix(graphSrc: List<List<String>>) {
 
     }
 
-
+    /**
+     * Returns the depth first path of the tree.
+     * @param at Staring vertex for DFS.
+     * @param list List used to store the DFS path.
+     */
     fun dfs(at: Int, list: ArrayList<Int>) {
 
         if (visited[at]) return
@@ -306,10 +374,17 @@ class AdjacencyMatrix(graphSrc: List<List<String>>) {
 
     }
 
+    /**
+     * Returns the degree of the vertex.
+     * @param at Vertex whose degree needs to be calculated.
+     * @return Degree of the vertex.
+     */
+    private fun getDegree(at: Int) = graph[at].filter { it == 1 }.count()
 
-    private fun getDegree(at: Int): Int = graph[at].filter { it == 1 }.count()
-
-
+    /**
+     * Returns the cardinality of vertices.
+     * @return ArrayList containing cardinality of each vertex.
+     */
     private fun getCard(): ArrayList<Int> {
 
         val cards = ArrayList<Int>()
@@ -323,7 +398,10 @@ class AdjacencyMatrix(graphSrc: List<List<String>>) {
 
     }
 
-
+    /**
+     * Returns all the edges in a graph.
+     * @return Edges in a graph as an List of Pair.
+     */
     private fun getEdges(): ArrayList<Pair<Int, Int>> {
 
         val edges = ArrayList<Pair<Int, Int>>()
@@ -339,7 +417,6 @@ class AdjacencyMatrix(graphSrc: List<List<String>>) {
         return edges
 
     }
-
 
     override fun toString(): String {
 
@@ -369,4 +446,5 @@ class AdjacencyMatrix(graphSrc: List<List<String>>) {
  * Eulerian Path: add circuit
  * Sink
  * Floyd Warshall: test
+ * InMove
  */
