@@ -1,9 +1,17 @@
+import java.util.function.Predicate
+
 fun main(args: Array<String>) {
 
 
-    val l : List<Int> = ArrayList<Int>()
-    cool(l)
-    println(l)
+//    for (i in 2..9) {
+//        val g = AdjacencyMatrix(readGraph("graphs/undir-graphs/undir-graph-$i.txt"))
+//        println(g.eulerPath())
+//
+//    }
+
+    coolFun { x -> x.length == 5 }
+
+
     /**
      * a = 0
      * b = 1
@@ -14,8 +22,9 @@ fun main(args: Array<String>) {
 
 }
 
-fun cool(stuff : MutableList<Int>){
-    stuff.add(100)
+fun coolFun(p: Predicate<String>) {
+    val l =  listOf("param", "asma", "simar", "chahat").stream().filter(p).toArray()
+    println(l.contentToString())
 }
 
 /*

@@ -1,4 +1,5 @@
 import java.lang.StringBuilder
+import java.util.*
 import java.util.stream.Collectors.toList
 import kotlin.collections.ArrayDeque
 import kotlin.collections.ArrayList
@@ -7,10 +8,9 @@ import kotlin.math.min
 class AdjacencyMatrix(graphSrc: List<List<String>>) {
 
     private val graph: Array<Array<Int>> = Array(graphSrc.size) { Array(graphSrc.size) { 0 } }
-    private var visited = Array(graph.size) { false }
 
-    private var time = 1
-    private var callOnRoot = 0
+    private class CallOnRoot(var value:Int)
+    private class Time(var value:Int)
 
     init {
         for (i in graphSrc.indices) {
@@ -59,16 +59,21 @@ class AdjacencyMatrix(graphSrc: List<List<String>>) {
         return r
     }
 
-
+    /**
+     * Finds the edge that cannot divide the graph in different components.
+     * @param at Starting vertex.
+     * @return All the critical edges.
+     */
     fun tarjan(at: Int): Array<Pair<Int, Int>> {
 
+        val visited = Array(graph.size){false}
+        val time = Time(1)
         val discover = Array(graph.size) { 0 }
         val low = Array(graph.size) { 0 }
         val pred = Array(graph.size) { 0 }
         val parentChild = ArrayList<Pair<Int, Int>>()
 
-        time = 1
-        computeLow(at, discover, low, pred, parentChild)
+        computeLow(at, visited, time, discover, low, pred, parentChild)
 
         return parentChild.filter { low[it.first] < low[it.second] }.toTypedArray()
 
@@ -86,7 +91,6 @@ class AdjacencyMatrix(graphSrc: List<List<String>>) {
                 }
             }
         }
-
 
         fun floydWarshall(v: Int, graph: Array<Array<Int>>) {
             for (i in graph.indices) {
@@ -128,13 +132,19 @@ class AdjacencyMatrix(graphSrc: List<List<String>>) {
 
     }
 
-    fun eulerPath(): ArrayList<Pair<Int, Int>> {
+    /**
+     * Returns the Eulerian path.
+     * @return Eulerian path.
+     */
+    fun eulerPath(): List<Pair<Int, Int>> {
 
+        val visited = Array(graph.size){false}
         val discover = Array(graph.size) { 0 }
         val low = Array(graph.size) { 0 }
         val pred = Array(graph.size) { 0 }
         val parentChild = ArrayList<Pair<Int, Int>>()
-        computeLow(0, discover, low, pred, parentChild)
+        val time = Time(1)
+        computeLow(0, visited, time, discover, low, pred, parentChild)
 
         val tempGraph = Array(graph.size) { Array(graph.size) { 0 } }
         for (i in graph.indices) {
@@ -145,8 +155,12 @@ class AdjacencyMatrix(graphSrc: List<List<String>>) {
 
         val eulerianPath = ArrayList<Pair<Int, Int>>()
 
-        if (isEulerian()) {
-            eulerPath(tempGraph, eulerStartVertex(), getEdges(), getCard(), low, discover, eulerianPath)
+        val startVertex = eulerStartVertex()
+        if (isEulerian() && startVertex >= 0) {
+            eulerPath(
+                tempGraph, startVertex, getEdges(),
+                getDegree(), low, discover, eulerianPath
+            )
         }
 
         return eulerianPath
@@ -155,39 +169,54 @@ class AdjacencyMatrix(graphSrc: List<List<String>>) {
 
     /**
      * Returns the starting vertex for euler path.
+     * @return Starting vertex for eulerian path.
      */
-    private fun eulerStartVertex() = getCard().indexOf(getCard().find { it % 2 != 0 })
+    private fun eulerStartVertex() = getDegree().indexOf(getDegree().find { it % 2 != 0 })
 
+    /**
+     * Finds the eulerian path.
+     * @param tempGraph Temporary graph.
+     * @param start Starting vertex for eulerian path.
+     * @param edges All the edges of the graph.
+     * @param degrees Degrees of all the vertices.
+     * @param low Low numbers for vertices.
+     * @param discover Discovery number for vertices.
+     * @param path Eulerian path
+     */
     private fun eulerPath(
         tempGraph: Array<Array<Int>>,
         start: Int,
-        numEdges: ArrayList<Pair<Int, Int>>,
-        cards: ArrayList<Int>,
+        edges: MutableList<Pair<Int, Int>>,
+        degrees: Array<Int>,
         low: Array<Int>,
         discover: Array<Int>,
-        path: ArrayList<Pair<Int, Int>>
+        path: MutableList<Pair<Int, Int>>
     ) {
 
-        if (numEdges.size == 0) return
+        if (edges.size == 0) return
 
         val neighbors = tempGraph[start]
 
         for (i in neighbors.indices) {
-            if (tempGraph[start][i] != 0 && (low[i] <= discover[start] || cards[start] == 1)) {
+            if (tempGraph[start][i] != 0 && (low[i] <= discover[start] || degrees[start] == 1)) {
                 path.add(Pair(start, i))
-                numEdges.remove(Pair(start, i))
-                numEdges.remove(Pair(i, start))
+                edges.remove(Pair(start, i))
+                edges.remove(Pair(i, start))
                 tempGraph[start][i] = 0
                 tempGraph[i][start] = 0
-                --cards[start]
-                --cards[i]
-                eulerPath(tempGraph, i, numEdges, cards, low, discover, path)
+                --degrees[start]
+                --degrees[i]
+                eulerPath(tempGraph, i, edges, degrees, low, discover, path)
             }
         }
 
     }
 
 
+    /**
+     * Checks is the graph is eulerian.
+     * @return True if the graph is eulerian else false.
+     */
     private fun isEulerian(): Boolean = graph.indices.count { getDegree(it) % 2 != 0 } <= 2
 
     /**
@@ -197,17 +226,17 @@ class AdjacencyMatrix(graphSrc: List<List<String>>) {
      */
     fun articulationPoints(start: Int): Array<Int> {
 
+        var visited = Array(graph.size){false}
+        val time = Time(1)
         val discover = Array(graph.size) { 0 }
         val low = Array(graph.size) { 0 }
         val pred = Array(graph.size) { 0 }
-        val parentChild = ArrayList<Pair<Int, Int>>()
+        val parentChild = LinkedList<Pair<Int, Int>>()
+        computeLow(start, visited, time, discover, low, pred, parentChild)
 
-        time = 1
-        computeLow(start, discover, low, pred, parentChild)
-
-        visited = Array(graph.size) { false }
-
-        isRootArticulation(start, start)
+        visited = Array(graph.size){false}
+        val callOnRoot = CallOnRoot(0)
+        isRootArticulation(start, start, visited,callOnRoot)
 
         val points = parentChild
             .stream()
@@ -216,7 +245,7 @@ class AdjacencyMatrix(graphSrc: List<List<String>>) {
             .distinct()
             .collect(toList())
 
-        if (callOnRoot >= 2) {
+        if (callOnRoot.value >= 2) {
             points.add(start)
         }
 
@@ -229,7 +258,7 @@ class AdjacencyMatrix(graphSrc: List<List<String>>) {
      * @param at Starting vertex.
      * @param root Root vertex.
      */
-    private fun isRootArticulation(at: Int, root: Int) {
+    private fun isRootArticulation(at: Int, root: Int, visited: Array<Boolean>, callOnRoot: CallOnRoot) {
 
         if (visited[at]) return
         visited[at] = true
@@ -238,9 +267,9 @@ class AdjacencyMatrix(graphSrc: List<List<String>>) {
         for (i in neighbours.indices) {
             if (neighbours[i] == 1 && !visited[i]) {
                 if (at == root) {
-                    ++callOnRoot
+                    ++callOnRoot.value
                 }
-                isRootArticulation(i, root)
+                isRootArticulation(i, root, visited, callOnRoot)
             }
         }
 
@@ -256,16 +285,18 @@ class AdjacencyMatrix(graphSrc: List<List<String>>) {
      */
     private fun computeLow(
         v: Int,
+        visited: Array<Boolean>,
+        time:Time,
         discover: Array<Int>,
         low: Array<Int>,
         pred: Array<Int>,
-        parentChild: ArrayList<Pair<Int, Int>>
+        parentChild: MutableList<Pair<Int, Int>>
     ) {
 
         visited[v] = true
 
-        low[v] = time
-        discover[v] = time
+        low[v] = time.value
+        discover[v] = time.value
 
         val neighbors = ArrayList<Int>()
         for (i in graph.indices) {
@@ -278,8 +309,8 @@ class AdjacencyMatrix(graphSrc: List<List<String>>) {
             if (!visited[w]) {
                 parentChild.add(Pair(v, w))
                 pred[w] = v
-                ++time
-                computeLow(w, discover, low, pred, parentChild)
+                ++time.value
+                computeLow(w, visited, time, discover, low, pred, parentChild)
                 low[v] = min(low[v], low[w])
             } else if (w != pred[v]) {
                 low[v] = min(low[v], discover[w])
@@ -296,17 +327,21 @@ class AdjacencyMatrix(graphSrc: List<List<String>>) {
      */
     fun bellmanFord(start: Int): Array<Int> {
 
-        val vertices = Array(graph.size) { Int.MAX_VALUE }
-        vertices[start] = 0
+        val distToVertices = Array(graph.size) { Int.MAX_VALUE }
+        distToVertices[start] = 0
 
         for (i in 0 until graph.size - 1) {
-            relaxation(vertices)
+            relaxation(distToVertices)
         }
 
-        return vertices
+        return distToVertices
 
     }
 
+    /**
+     * Updates the distance to the vertex if a shorted path is found.
+     * @param vertices Shortest path to other vertices.
+     */
     private fun relaxation(vertices: Array<Int>) {
 
         for (i in graph.indices) {
@@ -321,80 +356,101 @@ class AdjacencyMatrix(graphSrc: List<List<String>>) {
 
     }
 
-    /**
-     * Returns the BFS path of the graph.
-     * Useful for finding shortest path in an unweighted graph.
-     * @param at Staring vertex.
-     * @param List used to store the BFS path.
-     */
-    fun bfs(at: Int, list: ArrayList<Int>) {
+    fun bfs(at: Int): List<Int> {
 
-        list.add(at)
+        /**
+         * Returns the BFS path of the graph.
+         * Useful for finding shortest path in an unweighted graph.
+         * @param at Staring vertex.
+         * @param List used to store the BFS path.
+         */
+        fun bfs(at: Int, visited: Array<Boolean>, list: MutableList<Int>) {
 
-        val q = ArrayDeque<Int>()
+            list.add(at)
 
-        q.addLast(at)
-        visited[at] = true
+            val q = ArrayDeque<Int>()
 
-        while (q.isNotEmpty()) {
-            val neighbors = graph[q.removeFirst()]
+            q.addLast(at)
+            visited[at] = true
 
-            for (i in neighbors.indices) {
-                if (neighbors[i] == 1 && !visited[i]) {
-                    q.addLast(i)
-                    visited[i] = true
-                    list.add(i)
+            while (q.isNotEmpty()) {
+                val neighbors = graph[q.removeFirst()]
+
+                for (i in neighbors.indices) {
+                    if (neighbors[i] == 1 && !visited[i]) {
+                        q.addLast(i)
+                        visited[i] = true
+                        list.add(i)
+                    }
                 }
             }
+
         }
+
+        val visited = Array(graph.size){false}
+        val path = ArrayList<Int>()
+
+        bfs(at, visited, path)
+
+        return path
 
     }
 
-    /**
-     * Returns the depth first path of the tree.
-     * @param at Staring vertex for DFS.
-     * @param list List used to store the DFS path.
-     */
-    fun dfs(at: Int, list: ArrayList<Int>) {
 
-        if (visited[at]) return
-        visited[at] = true
+    fun dfs(at: Int): List<Int> {
 
-        list.add(at)
+        /**
+         * Returns the depth first path of the tree.
+         * @param at Staring vertex for DFS.
+         * @param list List used to store the DFS path.
+         */
+        fun dfs(at: Int, visited: Array<Boolean>, list: MutableList<Int>) {
 
-        val neighbours = graph[at]
-        for (i in neighbours.indices) {
-            if (neighbours[i] == 1 && !visited[i]) {
-                if (at == 0) {
-                    callOnRoot++
+            if (visited[at]) return
+            visited[at] = true
+
+            list.add(at)
+
+            val neighbours = graph[at]
+            for (i in neighbours.indices) {
+                if (neighbours[i] == 1 && !visited[i]) {
+                    dfs(i, visited, list)
                 }
-                dfs(i, list)
             }
+
         }
 
+        val visited = Array(graph.size){false}
+        val path = ArrayList<Int>()
+
+        dfs(at, visited, path)
+
+        return path
+
     }
+
 
     /**
      * Returns the degree of the vertex.
      * @param at Vertex whose degree needs to be calculated.
      * @return Degree of the vertex.
      */
-    private fun getDegree(at: Int) = graph[at].filter { it == 1 }.count()
+    fun getDegree(at: Int) = graph[at].count { it != 0 }
+
 
     /**
      * Returns the cardinality of vertices.
      * @return ArrayList containing cardinality of each vertex.
      */
-    private fun getCard(): ArrayList<Int> {
+    private fun getDegree(): Array<Int> {
 
-        val cards = ArrayList<Int>()
+        val degrees = Array(graph.size) { 0 }
 
-        for (i in graph.indices) {
-            val card = graph.indices.count { graph[i][it] != 0 }
-            cards.add(card)
+        for (i in degrees.indices) {
+            degrees[i] = getDegree(i)
         }
 
-        return cards
+        return degrees
 
     }
 
@@ -402,7 +458,7 @@ class AdjacencyMatrix(graphSrc: List<List<String>>) {
      * Returns all the edges in a graph.
      * @return Edges in a graph as an List of Pair.
      */
-    private fun getEdges(): ArrayList<Pair<Int, Int>> {
+    private fun getEdges(): MutableList<Pair<Int, Int>> {
 
         val edges = ArrayList<Pair<Int, Int>>()
 
@@ -429,7 +485,9 @@ class AdjacencyMatrix(graphSrc: List<List<String>>) {
                     s.append("$j, ")
                 }
             }
-            s.append("\n")
+            if (i != graph.size - 1) {
+                s.append("\n")
+            }
         }
 
         return s.toString()
