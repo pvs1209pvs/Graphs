@@ -3,14 +3,15 @@ import java.util.*
 import java.util.stream.Collectors.toList
 import kotlin.collections.ArrayDeque
 import kotlin.collections.ArrayList
+import kotlin.collections.HashSet
 import kotlin.math.min
 
 class AdjacencyMatrix(graphSrc: List<List<String>>) {
 
     private val graph: Array<Array<Int>> = Array(graphSrc.size) { Array(graphSrc.size) { 0 } }
 
-    private class CallOnRoot(var value:Int)
-    private class Time(var value:Int)
+    private class CallOnRoot(var value: Int)
+    private class Time(var value: Int)
 
     init {
         for (i in graphSrc.indices) {
@@ -20,6 +21,105 @@ class AdjacencyMatrix(graphSrc: List<List<String>>) {
         }
     }
 
+
+    /**
+     * Finds the topological ordering of the graph.
+     * @return Topological ordering.
+     */
+    fun topsort(): Array<Int> {
+
+        val topOrder = ArrayList<Int>(graph.size)
+        val inDegs = Array(graph.size) { getInDeg(it) }
+        val q = ArrayDeque<Int>()
+
+        findZeroInDeg(inDegs, topOrder).forEach { q.addLast(it) }
+
+        while (q.isNotEmpty()) {
+
+            val u = q.removeFirst()
+            topOrder.add(u)
+
+            val neighbor = getNeighbor(u)
+
+            neighbor.forEach { --inDegs[it] }
+
+            neighbor.filter { inDegs[it] == 0 }.forEach { q.add(it) }
+
+        }
+
+        return topOrder.toTypedArray()
+
+    }
+
+    /**
+     * Returns the vertices with zero in-deg.
+     * @param degs In-degs of all the vertices.
+     * @param visited Vertices already visited.
+     * @return Array of the vertices with zero in-deg.
+     */
+    private fun findZeroInDeg(degs: Array<Int>, visited: List<Int>) =
+        degs.indices.filter { degs[it] == 0 && !visited.contains(it) }.toTypedArray()
+
+    fun isCyclic(graphType: Char): Set<Pair<Int, Int>> {
+
+        fun dfs(at: Int, visited: Array<Boolean>, recStack: Array<Boolean>, cyclicEdges: MutableSet<Pair<Int, Int>>) {
+
+            if (visited[at]) return
+            visited[at] = true
+
+            recStack[at] = true
+
+            val neighbours = graph[at]
+            for (i in neighbours.indices) {
+
+                if (neighbours[i] == 1) {
+                    if (visited[i] && recStack[i]) {
+                        cyclicEdges.add(Pair(at, i))
+                    }
+                    if (!visited[i]) {
+                        dfs(i, visited, recStack, cyclicEdges)
+                    }
+                }
+            }
+
+            recStack[at] = false
+
+        }
+
+        fun dfs(at: Int, visited: Array<Boolean>, parent: Int, cyclicEdges: MutableSet<Pair<Int, Int>>) {
+
+            if (visited[at]) return
+            visited[at] = true
+
+            val neighbours = graph[at]
+            for (i in neighbours.indices) {
+
+                if (neighbours[i] == 1) {
+
+                    if (visited[i] && i != parent) {
+                        println("$at $i")
+                    }
+
+                    if (!visited[i]) {
+                        dfs(i, visited, at, cyclicEdges)
+                    }
+                }
+            }
+
+        }
+
+        val visited = Array(graph.size) { false }
+        val recStack = Array(graph.size) { false }
+        val cyclicEdges = HashSet<Pair<Int, Int>>()
+
+        when (graphType) {
+            'd' -> dfs(0, visited, recStack, cyclicEdges)
+            'u' -> dfs(0, visited, -1, cyclicEdges)
+        }
+
+        return cyclicEdges
+
+    }
 
     /**
      * Returns the number of paths you can take from one vertex to the other in p number of hops.
@@ -66,7 +166,7 @@ class AdjacencyMatrix(graphSrc: List<List<String>>) {
      */
     fun tarjan(at: Int): Array<Pair<Int, Int>> {
 
-        val visited = Array(graph.size){false}
+        val visited = Array(graph.size) { false }
         val time = Time(1)
         val discover = Array(graph.size) { 0 }
         val low = Array(graph.size) { 0 }
@@ -138,7 +238,7 @@ class AdjacencyMatrix(graphSrc: List<List<String>>) {
      */
     fun eulerPath(): List<Pair<Int, Int>> {
 
-        val visited = Array(graph.size){false}
+        val visited = Array(graph.size) { false }
         val discover = Array(graph.size) { 0 }
         val low = Array(graph.size) { 0 }
         val pred = Array(graph.size) { 0 }
@@ -212,7 +312,6 @@ class AdjacencyMatrix(graphSrc: List<List<String>>) {
 
     }
 
-
     /**
      * Checks is the graph is eulerian.
      * @return True if the graph is eulerian else false.
@@ -226,7 +325,7 @@ class AdjacencyMatrix(graphSrc: List<List<String>>) {
      */
     fun articulationPoints(start: Int): Array<Int> {
 
-        var visited = Array(graph.size){false}
+        var visited = Array(graph.size) { false }
         val time = Time(1)
         val discover = Array(graph.size) { 0 }
         val low = Array(graph.size) { 0 }
@@ -234,9 +333,9 @@ class AdjacencyMatrix(graphSrc: List<List<String>>) {
         val parentChild = LinkedList<Pair<Int, Int>>()
         computeLow(start, visited, time, discover, low, pred, parentChild)
 
-        visited = Array(graph.size){false}
+        visited = Array(graph.size) { false }
         val callOnRoot = CallOnRoot(0)
-        isRootArticulation(start, start, visited,callOnRoot)
+        isRootArticulation(start, start, visited, callOnRoot)
 
         val points = parentChild
             .stream()
@@ -286,7 +385,7 @@ class AdjacencyMatrix(graphSrc: List<List<String>>) {
     private fun computeLow(
         v: Int,
         visited: Array<Boolean>,
-        time:Time,
+        time: Time,
         discover: Array<Int>,
         low: Array<Int>,
         pred: Array<Int>,
@@ -356,6 +455,11 @@ class AdjacencyMatrix(graphSrc: List<List<String>>) {
 
     }
 
+    /**
+     * Returns the BFS search.
+     * @param at Starting vertex.
+     * @return BFS search order.
+     */
     fun bfs(at: Int): List<Int> {
 
         /**
@@ -387,7 +491,7 @@ class AdjacencyMatrix(graphSrc: List<List<String>>) {
 
         }
 
-        val visited = Array(graph.size){false}
+        val visited = Array(graph.size) { false }
         val path = ArrayList<Int>()
 
         bfs(at, visited, path)
@@ -397,6 +501,11 @@ class AdjacencyMatrix(graphSrc: List<List<String>>) {
     }
 
 
+    /**
+     * Returns the DFS search.
+     * @param at Starting vertex.
+     * @return DFS search order.
+     */
     fun dfs(at: Int): List<Int> {
 
         /**
@@ -420,7 +529,7 @@ class AdjacencyMatrix(graphSrc: List<List<String>>) {
 
         }
 
-        val visited = Array(graph.size){false}
+        val visited = Array(graph.size) { false }
         val path = ArrayList<Int>()
 
         dfs(at, visited, path)
@@ -429,17 +538,15 @@ class AdjacencyMatrix(graphSrc: List<List<String>>) {
 
     }
 
-
     /**
-     * Returns the degree of the vertex.
-     * @param at Vertex whose degree needs to be calculated.
+     * Returns the degree of the vertex in an undirected graph.
+     * @param vertex Vertex whose degree needs to be calculated.
      * @return Degree of the vertex.
      */
-    fun getDegree(at: Int) = graph[at].count { it != 0 }
-
+    private fun getDegree(vertex: Int) = graph[vertex].count { it != 0 }
 
     /**
-     * Returns the cardinality of vertices.
+     * Returns the degree of all the vertices in an undirected graph.
      * @return ArrayList containing cardinality of each vertex.
      */
     private fun getDegree(): Array<Int> {
@@ -453,6 +560,27 @@ class AdjacencyMatrix(graphSrc: List<List<String>>) {
         return degrees
 
     }
+
+    /**
+     * Out-degree of the vertex.
+     * @param vertex Vertex whose out-degree needs to be calculated.
+     * @return Out-degree of the vertex.
+     */
+    private fun getOutDeg(vertex: Int) = graph[vertex].count { it != 0 }
+
+    /**
+     * In-degree of the vertex.
+     * @param vertex Vertex whose in-degree needs to be calculated.
+     * @return In-degree of the vertex.
+     */
+    private fun getInDeg(vertex: Int) = graph.indices.count { graph[it][vertex] != 0 }
+
+    /**
+     * Neighbors of a vertex.
+     * @param vertex Vertex whose neighbors needs to be found.
+     * @return Array of all the neighbors.
+     */
+    private fun getNeighbor(vertex: Int) = graph.indices.filter { graph[vertex][it] != 0 }.toIntArray()
 
     /**
      * Returns all the edges in a graph.
@@ -472,6 +600,36 @@ class AdjacencyMatrix(graphSrc: List<List<String>>) {
 
         return edges
 
+    }
+
+    /**
+     * Connects two vertices.
+     * @param from Source vertex.
+     * @param to Destination vertex.
+     */
+    fun addEdge(from: Int, to: Int) {
+        graph[from][to] = 1
+    }
+
+    /**
+     * Connects two vertices.
+     * @param from Source vertex.
+     * @param to Destination vertex.
+     * @param weight Weight of the edge.
+     */
+    fun addEdge(from: Int, to: Int, weight: Int) {
+        graph[from][to] = weight
+    }
+
+    /**
+     * Removes all the edges.
+     */
+    fun reset() {
+        for (i in graph.indices) {
+            for (j in graph.indices) {
+                graph[i][j] = 0
+            }
+        }
     }
 
     override fun toString(): String {
@@ -501,8 +659,10 @@ class AdjacencyMatrix(graphSrc: List<List<String>>) {
  * Bellman Ford
  * Articulation Points
  * Tarjan's Algorithm
- * Eulerian Path: add circuit
  * Sink
- * Floyd Warshall: test
  * InMove
+ * TODO: Floyd Warshall: test
+ * TODO: Eulerian Path: add circuit, test
+ * TODO: IsCyclic: test
+ * TODO: Topological Sort: test
  */
